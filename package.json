@@ -9,6 +9,7 @@
   "author": "",
   "license": "All rights reserved",
   "dependencies": {
-    "express": "^4.13.4"
+    "express": "^4.13.4",
+    "mongodb": "^2.1.21"
   }
 }

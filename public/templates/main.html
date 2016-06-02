@@ -1,11 +1,10 @@
 
 <md-toolbar>
   <div class="md-toolbar-tools">
-    <span>Instalytics</span>
+    <span>Instalytics - NoLocation: {{noLocation}}, total: {{total}}</span>
   </div>
 </md-toolbar>
-<md-content flex layout-padding>
-  <div data-tap-disabled>
-    <div style="width: 100%;height:300px;" id="map"></div>
-  </div>
+<md-content flex>
+  <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+  <div id="map"></div>
 </md-content>
