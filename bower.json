@@ -17,6 +17,7 @@
     "tests"
   ],
   "dependencies": {
-    "angular-ui-router": "ui-router#^0.3.0"
+    "angular-ui-router": "ui-router#^0.3.0",
+    "angular-resource": "^1.5.6"
   }
 }
