@@ -1,0 +1,22 @@
+{
+  "name": "instalytics",
+  "description": "An analytics monitoring tool for instanews",
+  "main": "index.js",
+  "authors": [
+    "Zane McCaig <zane@instanews.com>"
+  ],
+  "license": "All rights reserved",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-ui-router": "ui-router#^0.3.0"
+  }
+}
