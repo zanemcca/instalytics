@@ -1,7 +1,28 @@
 
-<md-toolbar>
-  <div class="md-toolbar-tools">
-    <span>Instalytics - NoLocation: {{noLocation}}, total: {{total}}</span>
+<md-toolbar class="md-menu-toolbar">
+  <div layout="row">
+    <md-toolbar-filler layout layout-align="center center">
+      <button class="md-button md-icon-button" ng-click="loadData()">
+        <i class="material-icons">search</i>
+      </button>
+    </md-toolbar-filler>
+    <div>
+      <h2 class="md-toolbar-tools"><b>Instalytics</b> - Total: {{total}}; TopUser: {{topUser.name}},{{topUser.count}}</h2>
+      <md-menu-bar>
+        <md-menu>
+          <button class="md-button" ng-click="$mdOpenMenu()" aria-label="Filter">
+            Filter 
+          </button>
+          <md-menu-content>
+            <md-menu-item>
+              <md-switch style="margin-top:0;margin-bottom:0;" ng-model="filter.excludeUsers" aria-label="Exclude Users">
+                  Exclude Users: {{ filter.excludeUsers }}
+              </md-switch>
+            </md-menu-item>
+          </md-menu-content>
+        </md-menu>
+      </md-menu-bar>
+    </div>
   </div>
 </md-toolbar>
 <md-content flex>

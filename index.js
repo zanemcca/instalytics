@@ -35,9 +35,10 @@ app.use('/components', express.static('node_modules'));
 
 app.get('/api/views', function(req, res) {
   try {
-    console.log(req.query);
-    var query = JSON.parse(req.query.query);
-    console.log(query);
+    var query;
+    if(req.query.query) {
+      query = JSON.parse(req.query.query);
+    }
     Views.find(query).toArray(function(err, views) {
       res.send(views);
     });

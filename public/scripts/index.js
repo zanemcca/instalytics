@@ -1,10 +1,12 @@
 
-var app = angular.module('instalytics', ['ngMaterial', 'ngResource', 'ui.router']);
+var app = angular.module('instalytics', ['ngAnimate', 'angular-loading-bar', 'ngMaterial', 'ngResource', 'ui.router']);
 
 app.config(function(
   $stateProvider,
+  $mdGestureProvider,
   $urlRouterProvider
 ){
+  //$mdGestureProvider.skipClickHijack();
 
   var stateProvider = $stateProvider
   .state('app', {
@@ -31,6 +33,24 @@ app.constant(
   '_',
   window._
 );
+
+function loadJSON(file, callback) {   
+    var xobj = new XMLHttpRequest();
+        xobj.overrideMimeType("application/json");
+    xobj.open('GET', file, true); // Replace 'my_data' with the path to your file
+    xobj.onreadystatechange = function () {
+          if (xobj.readyState == 4 && xobj.status == "200") {
+            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+            try {
+              var res = JSON.parse(xobj.responseText);
+              callback(res);
+            } catch(e) {
+              callback();
+            }
+          }
+    };
+    xobj.send(null);  
+}
 
 app.controller('mainCtrl', [
   '$scope',
@@ -81,32 +101,35 @@ app.controller('mainCtrl', [
     };
 
     $scope.noLocation = 0;
+    $scope.outOfBounds = 0;
+    $scope.total = 0;
+    $scope.filter = {
+      excludeUsers: true
+    };
 
-    var excludedUsers = [
-      'zane',
-      'shawn',
-      'superman',
-      'flash',
-      'ben',
-      'fastresponse',
-      '3000',
-      'mrreportz'
-    ];
-    //excludedUsers = [];
+    var convert = function(raw) {
+      $scope.noLocation = 0;
+      $scope.outOfBounds = 0;
 
-    var views = Server.Views.query({
-      query: {
-        username: {
-          $nin: excludedUsers 
-        }
-      }
-    },function() {
+      var bnds = map.getBounds();
       var data = [];
-      for(var i in views) {
-        if(views[i].location) {
-          var loc = posToLatLng(views[i].location);
+
+      var users = {};
+      for(var i in raw) {
+        if(raw[i].location) {
+          var loc = posToLatLng(raw[i].location);
           if(loc) {
-            data.push(loc);
+            if(bnds.contains(loc)){
+              if(users[raw[i].username]) {
+                users[raw[i].username]++;
+              } else {
+                users[raw[i].username] = 1;
+              }
+
+              data.push(loc);
+            } else {
+              $scope.outOfBounds++;
+            }
           } else {
             $scope.noLocation++;
           }
@@ -115,29 +138,99 @@ app.controller('mainCtrl', [
         }
       }
 
-      $scope.total = views.length;
-
-      var heatmap = new google.maps.visualization.HeatmapLayer({
-        map: map,
-        radius: 15,
-        opacity: 1,
-        dissipating: true,
-        data: data
-      });
-
-      google.maps.event.addListener(map, 'bounds_changed', _.debounce(function() {
-        var bnds = map.getBounds();
-        var minimized = [];
-        for( var i in data) {
-          if(bnds.contains(data[i])){
-            minimized.push(data[i]);
-          }
+      var user;
+      for(var i in users) {
+        if(!user || users[i] > users[user]) {
+          user = i;
         }
-        $timeout(function() {
-          $scope.total = minimized.length;
-        });
-        heatmap.setData(minimized);
-      },500));
-    });
+      }
 
+      $scope.topUser = {
+        name: user,
+        count: users[user]
+      };
+
+      $scope.total = data.length;
+      return data;
+    };
+
+    var heatmap, listener;
+
+    var retrieveViews = function(query) {
+      if(query) {
+        query = {
+          query: query
+        };
+      }
+
+      var views = Server.Views.query(query,function() {
+
+        var data = convert(views);
+
+        if(!heatmap) { 
+          heatmap = new google.maps.visualization.HeatmapLayer({
+            map: map,
+            radius: 15,
+            opacity: 1,
+            dissipating: true,
+            data: data
+          });
+        } else {
+          heatmap.setData(data);
+        }
+
+        if(!listener) {
+          listener = google.maps.event.addListener(map, 'bounds_changed', _.debounce(function() {
+            $timeout(function() {
+              heatmap.setData(convert(views));
+            });
+           },500));
+        }
+      });
+    };
+
+    $scope.loadData = function() {
+      if($scope.filter.excludeUsers) {
+        loadJSON('bensUsers.json', function(users) {
+          var excludedUsers = [
+            'zane',
+            'ben',
+            //Sophie
+            'sophie',
+            //Shawn
+            'leblanc',
+            'shawn',
+            'trump',
+            //Bens dad
+            'superman',
+            'apple',
+            'wildfire',
+            'star',
+            'jesus',
+            'flash',
+            'alert'
+          ];
+
+          if(users) { 
+            for(var i in users) {
+              if(typeof users[i].Username === 'number') {
+                excludedUsers.push(users[i].Username.toString());
+              } else {
+                excludedUsers.push(users[i].Username.toLowerCase());
+              }
+            }
+          }
+
+          retrieveViews({
+            username: {
+              $nin: excludedUsers
+            }
+          });
+         });
+      } else {
+        retrieveViews();
+      }
+    };
+
+    $scope.loadData();
 }]);
