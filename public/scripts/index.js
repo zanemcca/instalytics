@@ -128,9 +128,12 @@ app.controller('mainCtrl', [
       excludeUsers: true
     };
 
+    var IN_VIEW = 2;
+    var OUT_VIEW = 1;
+    var TOTAL = 0;
     $scope.time = {
       labels: ['loading'],
-      series: ['InView','OutOfView', 'Total'],
+      series: ['Total','OutOfView', 'InView'],
       data: [[0], [0], [0]]
     };
 
@@ -193,9 +196,9 @@ app.controller('mainCtrl', [
           return outViewTime[sortedKey];
         });
 
-        $scope.time.data[0].length = 0;
-        $scope.time.data[1].length = 0;
-        $scope.time.data[2].length = 0;
+        $scope.time.data[IN_VIEW].length = 0;
+        $scope.time.data[OUT_VIEW].length = 0;
+        $scope.time.data[TOTAL].length = 0;
         $scope.time.labels.length = 0;
 
         // Prepopulate the dates up to the first sortedTime date
@@ -203,11 +206,11 @@ app.controller('mainCtrl', [
         var end = (new Date(sortedTime[0].date.toDateString())).getTime();
         if(date < end) {
           $scope.time.labels.push(sortedOutViewTime[0].date.toDateString());
-          $scope.time.data[0].push(0);
+          $scope.time.data[IN_VIEW].push(0);
           while(end - (new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() > 1000*60*60*24) {
           //while(end - (new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() > 0) {
             $scope.time.labels.push((new Date((new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() + 1000*60*60*24)).toDateString());
-            $scope.time.data[0].push(0);
+            $scope.time.data[IN_VIEW].push(0);
           }
         }
 
@@ -218,42 +221,42 @@ app.controller('mainCtrl', [
             var date = (new Date(sortedTime[i].date.toDateString())).getTime();
             while(date - (new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() > 1000*60*60*24) {
               $scope.time.labels.push((new Date((new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() + 1000*60*60*24)).toDateString());
-              $scope.time.data[0].push(0);
+              $scope.time.data[IN_VIEW].push(0);
             }
           }
           $scope.time.labels.push(sortedTime[i].date.toDateString());
-          $scope.time.data[0].push(sortedTime[i].count);
+          $scope.time.data[IN_VIEW].push(sortedTime[i].count);
         }
 
         console.log('Processing out of view');
         for(var i in sortedOutViewTime) {
           //Fill in any missing labels 
-          while($scope.time.data[1].length >= $scope.time.labels.length) {
+          while($scope.time.data[OUT_VIEW].length >= $scope.time.labels.length) {
             $scope.time.labels.push((new Date((new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() + 1000*60*60*24)).toDateString());
           }
 
           var dateString = sortedOutViewTime[i].date.toDateString();
           var date = (new Date(dateString)).getTime();
           //Fill in any missing days
-          while(date - (new Date($scope.time.labels[$scope.time.data[1].length])).getTime() > 0) {
-            $scope.time.data[1].push(0);
-            if($scope.time.data[1].length >= $scope.time.labels.length) {
+          while(date - (new Date($scope.time.labels[$scope.time.data[OUT_VIEW].length])).getTime() > 0) {
+            $scope.time.data[OUT_VIEW].push(0);
+            if($scope.time.data[OUT_VIEW].length >= $scope.time.labels.length) {
               $scope.time.labels.push((new Date((new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() + 1000*60*60*24)).toDateString());
             }
           }
 
-          $scope.time.data[1].push(sortedOutViewTime[i].count);
+          $scope.time.data[OUT_VIEW].push(sortedOutViewTime[i].count);
         }
         // Fill in the remainder
-        while($scope.time.data[1].length < $scope.time.labels.length) {
-          $scope.time.data[1].push(0);
+        while($scope.time.data[OUT_VIEW].length < $scope.time.labels.length) {
+          $scope.time.data[OUT_VIEW].push(0);
         }
-        while($scope.time.data[0].length < $scope.time.labels.length) {
-          $scope.time.data[0].push(0);
+        while($scope.time.data[IN_VIEW].length < $scope.time.labels.length) {
+          $scope.time.data[IN_VIEW].push(0);
         }
 
         for(var i in $scope.time.labels) {
-          $scope.time.data[2].push($scope.time.data[0][i] + $scope.time.data[1][i]);
+          $scope.time.data[TOTAL].push($scope.time.data[IN_VIEW][i] + $scope.time.data[OUT_VIEW][i]);
         }
 
       } catch(e) {
@@ -261,9 +264,9 @@ app.controller('mainCtrl', [
       }
 
       /*
-      console.log($scope.time.data[0].length);
-      console.log($scope.time.data[1].length);
-      console.log($scope.time.data[2].length);
+      console.log($scope.time.data[IN_VIEW].length);
+      console.log($scope.time.data[OUT_VIEW].length);
+      console.log($scope.time.data[TOTAL].length);
       console.log($scope.time.labels.length);
      */
 
