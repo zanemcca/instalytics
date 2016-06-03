@@ -1,5 +1,5 @@
 
-var app = angular.module('instalytics', ['ngAnimate', 'angular-loading-bar', 'ngMaterial', 'ngResource', 'ui.router']);
+var app = angular.module('instalytics', ['chart.js', 'ngAnimate', 'angular-loading-bar', 'ngMaterial', 'ngResource', 'ui.router']);
 
 app.config(function(
   $stateProvider,
@@ -57,6 +57,21 @@ function loadJSON(file, callback) {
     xobj.send(null);  
 }
 
+var processDate = function(raw, output){
+  if(raw._id) {
+    var date = new Date(parseInt(raw._id.toString().substring(0,8), 16)*1000);
+    var dateString = date.toDateString();
+    if(output[dateString]) {
+      output[dateString].count++;
+    } else {
+      output[dateString] = {
+        count: 1,
+        date: date
+      }
+    }
+  }
+};
+
 app.controller('mainCtrl', [
   '$scope',
   '$timeout',
@@ -113,7 +128,14 @@ app.controller('mainCtrl', [
       excludeUsers: true
     };
 
+    $scope.time = {
+      labels: ['loading'],
+      series: ['InView','OutOfView', 'Total'],
+      data: [[0], [0], [0]]
+    };
+
     var convert = function(raw) {
+      console.log('Starting processing');
       $scope.noLocation = -2;
       $scope.outOfBounds = 0;
       $scope.unique = 0;
@@ -122,11 +144,14 @@ app.controller('mainCtrl', [
       var data = [];
 
       var users = {};
+      var time = {};
+      var outViewTime = {};
       for(var i in raw) {
         if(raw[i].location) {
           var loc = posToLatLng(raw[i].location);
           if(loc) {
             if(bnds.contains(loc)){
+              processDate(raw[i], time);
               if(users[raw[i].username]) {
                 users[raw[i].username]++;
               } else {
@@ -135,12 +160,15 @@ app.controller('mainCtrl', [
               }
               data.push(loc);
             } else {
+              processDate(raw[i], outViewTime);
               $scope.outOfBounds++;
             }
           } else {
+            processDate(raw[i], outViewTime);
             $scope.noLocation++;
           }
         } else {
+          processDate(raw[i], outViewTime);
           $scope.noLocation++;
         }
       }
@@ -151,6 +179,95 @@ app.controller('mainCtrl', [
           user = i;
         }
       }
+
+      try { 
+        var sortedTime = Object.keys(time).sort(function(a,b) {
+          return time[a].date.getTime() - time[b].date.getTime();
+        }).map(function(sortedKey) {
+          return time[sortedKey];
+        });
+
+        var sortedOutViewTime = Object.keys(outViewTime).sort(function(a,b) {
+          return outViewTime[a].date.getTime() - outViewTime[b].date.getTime();
+        }).map(function(sortedKey) {
+          return outViewTime[sortedKey];
+        });
+
+        $scope.time.data[0].length = 0;
+        $scope.time.data[1].length = 0;
+        $scope.time.data[2].length = 0;
+        $scope.time.labels.length = 0;
+
+        // Prepopulate the dates up to the first sortedTime date
+        var date = (new Date(sortedOutViewTime[0].date.toDateString())).getTime();
+        var end = (new Date(sortedTime[0].date.toDateString())).getTime();
+        if(date < end) {
+          $scope.time.labels.push(sortedOutViewTime[0].date.toDateString());
+          $scope.time.data[0].push(0);
+          while(end - (new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() > 1000*60*60*24) {
+          //while(end - (new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() > 0) {
+            $scope.time.labels.push((new Date((new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() + 1000*60*60*24)).toDateString());
+            $scope.time.data[0].push(0);
+          }
+        }
+
+        console.log('Processing in view');
+        for(var i in sortedTime) {
+          if($scope.time.labels.length > 0) {
+            //Fill in any missing days
+            var date = (new Date(sortedTime[i].date.toDateString())).getTime();
+            while(date - (new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() > 1000*60*60*24) {
+              $scope.time.labels.push((new Date((new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() + 1000*60*60*24)).toDateString());
+              $scope.time.data[0].push(0);
+            }
+          }
+          $scope.time.labels.push(sortedTime[i].date.toDateString());
+          $scope.time.data[0].push(sortedTime[i].count);
+        }
+
+        console.log('Processing out of view');
+        for(var i in sortedOutViewTime) {
+          //Fill in any missing labels 
+          while($scope.time.data[1].length >= $scope.time.labels.length) {
+            $scope.time.labels.push((new Date((new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() + 1000*60*60*24)).toDateString());
+          }
+
+          var dateString = sortedOutViewTime[i].date.toDateString();
+          var date = (new Date(dateString)).getTime();
+          //Fill in any missing days
+          while(date - (new Date($scope.time.labels[$scope.time.data[1].length])).getTime() > 0) {
+            $scope.time.data[1].push(0);
+            if($scope.time.data[1].length >= $scope.time.labels.length) {
+              $scope.time.labels.push((new Date((new Date($scope.time.labels[$scope.time.labels.length -1])).getTime() + 1000*60*60*24)).toDateString());
+            }
+          }
+
+          $scope.time.data[1].push(sortedOutViewTime[i].count);
+        }
+        // Fill in the remainder
+        while($scope.time.data[1].length < $scope.time.labels.length) {
+          $scope.time.data[1].push(0);
+        }
+        while($scope.time.data[0].length < $scope.time.labels.length) {
+          $scope.time.data[0].push(0);
+        }
+
+        for(var i in $scope.time.labels) {
+          $scope.time.data[2].push($scope.time.data[0][i] + $scope.time.data[1][i]);
+        }
+
+      } catch(e) {
+        console.log(e);
+      }
+
+      /*
+      console.log($scope.time.data[0].length);
+      console.log($scope.time.data[1].length);
+      console.log($scope.time.data[2].length);
+      console.log($scope.time.labels.length);
+     */
+
+      console.log('Finished processing!');
 
       $scope.topUser = {
         name: user,

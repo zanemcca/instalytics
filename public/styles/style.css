@@ -27,5 +27,10 @@ body {
 
 #map {
   width: 100%;
-  height: calc(100vh - 108px);
+  height: calc(70vh - 108px);
+}
+
+.chart-container, #time {
+  width: 100%;
+  height: calc(30vh);
 }
