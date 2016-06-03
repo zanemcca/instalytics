@@ -25,7 +25,12 @@ app.service('Server', [
   ){
     return {
       Views: $resource('/api/views'),
-      Articles: $resource('/api/articles/:id')
+      DownVotes: $resource('/api/downvotes'),
+      UpVotes: $resource('/api/upvotes'),
+      Clicks: $resource('/api/clicks'),
+      Shares: $resource('/api/shares'),
+      Articles: $resource('/api/articles'),
+      Subarticles: $resource('/api/subarticles')
     };
 }]);
 
@@ -104,12 +109,14 @@ app.controller('mainCtrl', [
     $scope.outOfBounds = 0;
     $scope.total = 0;
     $scope.filter = {
+      type: 'Views',
       excludeUsers: true
     };
 
     var convert = function(raw) {
-      $scope.noLocation = 0;
+      $scope.noLocation = -2;
       $scope.outOfBounds = 0;
+      $scope.unique = 0;
 
       var bnds = map.getBounds();
       var data = [];
@@ -123,9 +130,9 @@ app.controller('mainCtrl', [
               if(users[raw[i].username]) {
                 users[raw[i].username]++;
               } else {
+                $scope.unique++;
                 users[raw[i].username] = 1;
               }
-
               data.push(loc);
             } else {
               $scope.outOfBounds++;
@@ -154,18 +161,18 @@ app.controller('mainCtrl', [
       return data;
     };
 
-    var heatmap, listener;
+    var items, heatmap, listener;
 
-    var retrieveViews = function(query) {
+    var retrieve = function(query) {
       if(query) {
         query = {
           query: query
         };
       }
 
-      var views = Server.Views.query(query,function() {
+      items = Server[$scope.filter.type].query(query,function() {
 
-        var data = convert(views);
+        var data = convert(items);
 
         if(!heatmap) { 
           heatmap = new google.maps.visualization.HeatmapLayer({
@@ -182,7 +189,7 @@ app.controller('mainCtrl', [
         if(!listener) {
           listener = google.maps.event.addListener(map, 'bounds_changed', _.debounce(function() {
             $timeout(function() {
-              heatmap.setData(convert(views));
+              heatmap.setData(convert(items));
             });
            },500));
         }
@@ -221,14 +228,14 @@ app.controller('mainCtrl', [
             }
           }
 
-          retrieveViews({
+          retrieve({
             username: {
               $nin: excludedUsers
             }
           });
          });
       } else {
-        retrieveViews();
+        retrieve();
       }
     };
 

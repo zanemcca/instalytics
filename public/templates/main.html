@@ -7,7 +7,7 @@
       </button>
     </md-toolbar-filler>
     <div>
-      <h2 class="md-toolbar-tools"><b>Instalytics</b> - Total: {{total}}; TopUser: {{topUser.name}},{{topUser.count}}</h2>
+      <h2 class="md-toolbar-tools"><b>Instalytics</b> - InView: {{total}}; NoLocation: {{noLocation}}; UniqueUsers: {{unique}}; TopUser: {{topUser.name}},{{topUser.count}}</h2>
       <md-menu-bar>
         <md-menu>
           <button class="md-button" ng-click="$mdOpenMenu()" aria-label="Filter">
@@ -18,6 +18,18 @@
               <md-switch style="margin-top:0;margin-bottom:0;" ng-model="filter.excludeUsers" aria-label="Exclude Users">
                   Exclude Users: {{ filter.excludeUsers }}
               </md-switch>
+            </md-menu-item>
+            <md-menu-divider></md-menu-divider>
+            <md-menu-item style="height: 100%">
+              <md-radio-group ng-model="filter.type">
+                <md-radio-button value="Views" class="md-primary">Views</md-radio-button>
+                <md-radio-button value="Clicks">Clicks</md-radio-button>
+                <md-radio-button value="UpVotes">UpVotes</md-radio-button>
+                <md-radio-button value="DownVotes">DownVotes</md-radio-button>
+                <md-radio-button value="Shares">Shares</md-radio-button>
+                <md-radio-button value="Articles">Articles</md-radio-button>
+                <md-radio-button value="Subarticles">Subarticles</md-radio-button>
+              </md-radio-group>
             </md-menu-item>
           </md-menu-content>
         </md-menu>
