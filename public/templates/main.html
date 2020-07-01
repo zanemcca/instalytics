@@ -16,7 +16,7 @@
           <md-menu-content>
             <md-menu-item>
               <md-switch style="margin-top:0;margin-bottom:0;" ng-model="filter.excludeUsers" aria-label="Exclude Users">
-                  Exclude Users: {{ filter.excludeUsers }}
+                  Exclude Users
               </md-switch>
             </md-menu-item>
             <md-menu-divider></md-menu-divider>
@@ -30,6 +30,24 @@
                 <md-radio-button value="Articles">Articles</md-radio-button>
                 <md-radio-button value="Subarticles">Subarticles</md-radio-button>
               </md-radio-group>
+            </md-menu-item>
+          </md-menu-content>
+        </md-menu>
+        <md-menu>
+          <button class="md-button" ng-click="$mdOpenMenu()" aria-label="Graph">
+            Graph 
+          </button>
+          <md-menu-content>
+            <md-menu-item>
+              <md-switch style="margin-top:0;margin-bottom:0;" ng-model="graph.showTotal" aria-label="Show Total">
+                  Show Total
+              </md-switch>
+            </md-menu-item>
+            <md-menu-divider></md-menu-divider>
+            <md-menu-item>
+              <md-switch style="margin-top:0;margin-bottom:0;" ng-model="graph.showOutView" aria-label="Show Out of View">
+                  Show Out of View
+              </md-switch>
             </md-menu-item>
           </md-menu-content>
         </md-menu>

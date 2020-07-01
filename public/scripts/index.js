@@ -137,6 +137,12 @@ app.controller('mainCtrl', [
       data: [[0], [0], [0]]
     };
 
+    $scope.graph = {
+      showTotal: false,
+      showOutView: false
+    };
+
+
     var convert = function(raw) {
       console.log('Starting processing');
       $scope.noLocation = -2;
@@ -245,7 +251,11 @@ app.controller('mainCtrl', [
             }
           }
 
-          $scope.time.data[OUT_VIEW].push(sortedOutViewTime[i].count);
+          if($scope.graph.showOutView) {
+            $scope.time.data[OUT_VIEW].push(sortedOutViewTime[i].count);
+          } else {
+            $scope.time.data[OUT_VIEW].push(0);
+          }
         }
         // Fill in the remainder
         while($scope.time.data[OUT_VIEW].length < $scope.time.labels.length) {
@@ -256,7 +266,11 @@ app.controller('mainCtrl', [
         }
 
         for(var i in $scope.time.labels) {
-          $scope.time.data[TOTAL].push($scope.time.data[IN_VIEW][i] + $scope.time.data[OUT_VIEW][i]);
+          if($scope.graph.showTotal) {
+            $scope.time.data[TOTAL].push($scope.time.data[IN_VIEW][i] + $scope.time.data[OUT_VIEW][i]);
+          } else {
+            $scope.time.data[TOTAL].push(0);
+          }
         }
 
       } catch(e) {
@@ -322,8 +336,8 @@ app.controller('mainCtrl', [
           var excludedUsers = [
             'zane',
             'ben',
-            //Sophie
-            'sophie',
+            //'gavin',
+            //'sophie',
             //Shawn
             'leblanc',
             'shawn',
